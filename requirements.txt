@@ -1,0 +1,14 @@
+# Dependencies pinned to versions observed in the source environment.
+# Python 3.12
+
+ultralytics==8.3.232
+torch==2.8.0
+torchvision          # version not pinned in sources; install compatible with torch==2.8.0
+tensorflow           # VERSION NOT VERIFIED — left unpinned; install TF compatible with Python 3.12
+opencv-python==4.12.0.88
+numpy==2.0.2
+matplotlib==3.10.0
+pillow==11.3.0
+scikit-learn         # version not pinned in sources
+pyyaml               # version not pinned in sources
+pandas               # required for manifest.csv and flow_from_dataframe

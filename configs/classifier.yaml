@@ -1,0 +1,67 @@
+# Classifier hyperparameters — sourced from train_mobilenet.py / test_mobilenet.py
+# Do NOT invent values. All entries here are directly observed in source files.
+
+# Input
+img_size: [128, 128]
+
+# Data loading
+train_batch_size: 32   # train_mobilenet.py: BATCH_SIZE=32
+eval_batch_size: 64    # test_mobilenet.py:  batch_size=64
+class_mode: "categorical"
+
+# Augmentation (training only)
+augmentation:
+  rescale: 0.00392156862  # 1/255
+  rotation_range: 20
+  width_shift_range: 0.2
+  height_shift_range: 0.2
+  shear_range: 0.2
+  zoom_range: 0.2
+  horizontal_flip: true
+  fill_mode: "nearest"
+
+# Architecture
+base_model: "MobileNetV2"
+base_weights: "imagenet"
+include_top: false
+fine_tune_last_n_layers: 20
+dense_units: 128
+dropout_rate: 0.5
+num_classes: 3
+
+# Training
+optimizer: "Adam"
+learning_rate: 0.0001
+loss: "categorical_crossentropy"
+epochs: 20
+
+# Callbacks
+# NOTE: ONLY ReduceLROnPlateau is present in train_mobilenet.py.
+# EarlyStopping and ModelCheckpoint are NOT implemented (absent from source).
+reduce_lr_on_plateau:
+  monitor: "val_loss"
+  factor: 0.5
+  patience: 3
+
+# Output
+model_filename: "osteoporosis_mobilenetv2.h5"
+# DISCREPANCY: original test_mobilenet.py loaded "osteoporosis_mobilenet_model.h5"
+# Standardised to "osteoporosis_mobilenetv2.h5" (the name saved by train_mobilenet.py).
+
+# Dataset layout (VERIFIED from dataset screenshots)
+# Split folders:  train/  valid/  test/   (note "valid", NOT "val")
+# Class folders:  Normal/  Osteopenia/  Osteoporosis/
+# Root pattern:   <dataset_root>/100x100/{train,valid,test}/{class}/
+#
+# Class index order assigned alphabetically by flow_from_directory:
+#   Normal=0, Osteopenia=1, Osteoporosis=2
+# Keep this ordering consistent across train / evaluate / inference.
+class_order: [Normal, Osteopenia, Osteoporosis]  # indices 0, 1, 2 respectively
+
+# NOTE: the construction/labelling/splitting code that produced this layout
+# is NOT present in any source file. The layout is verified; the pipeline is not.
+
+# Paths — wired to DATASET_ROOT = D:\PESU\Capstone\dataset dental periapical\100x100
+train_dir: "D:\\PESU\\Capstone\\dataset dental periapical\\100x100\\train"
+val_dir: "D:\\PESU\\Capstone\\dataset dental periapical\\100x100\\valid"
+test_dir: "D:\\PESU\\Capstone\\dataset dental periapical\\100x100\\test"
