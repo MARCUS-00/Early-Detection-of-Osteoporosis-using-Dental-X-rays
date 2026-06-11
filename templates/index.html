@@ -11,8 +11,46 @@
   <div class='logo'>OsteoDetect</div>
   <p class='subtitle'>AI-Assisted Osteoporosis Screening from Dental X-rays</p>
 </header>
+
+<div class='pipeline-strip'>
+  <div class='pipe-step active'>
+    <span class='pipe-num'>1</span>
+    <span class='pipe-label'>Upload</span>
+  </div>
+  <span class='pipe-arrow'>→</span>
+  <div class='pipe-step inactive'>
+    <span class='pipe-num'>2</span>
+    <span class='pipe-label'>ROI Detection</span>
+  </div>
+  <span class='pipe-arrow'>→</span>
+  <div class='pipe-step inactive'>
+    <span class='pipe-num'>3</span>
+    <span class='pipe-label'>Segmentation</span>
+  </div>
+  <span class='pipe-arrow'>→</span>
+  <div class='pipe-step inactive'>
+    <span class='pipe-num'>4</span>
+    <span class='pipe-label'>Classification</span>
+  </div>
+  <span class='pipe-arrow'>→</span>
+  <div class='pipe-step inactive'>
+    <span class='pipe-num'>5</span>
+    <span class='pipe-label'>Report</span>
+  </div>
+</div>
+
 <main>
-  <div class='card upload-card'>
+  {% if error %}
+  <div class='error-banner'>
+    <span class='error-icon'>&#9888;</span>
+    {{ error }}
+  </div>
+  {% endif %}
+  <div class='card upload-card' style='position:relative;'>
+    <div class='loading-overlay' id='loading-overlay' style='display:none;'>
+      <div class='spinner'></div>
+      <p class='loading-text' id='loading-text'>Preprocessing image...</p>
+    </div>
     <form action='/predict' method='POST' enctype='multipart/form-data' id='upload-form'>
       <div class='drop-zone' id='drop-zone' onclick='document.getElementById("file-input").click()'>
         <svg width='48' height='48' fill='none' stroke='currentColor' stroke-width='1.5' viewBox='0 0 24 24'>
@@ -23,10 +61,29 @@
         <img id='preview' src='' alt='Preview' style='display:none;max-width:100%;margin-top:12px;border-radius:8px;'>
         <input type='file' id='file-input' name='xray' accept='.jpg,.jpeg,.png,.bmp' required style='display:none'>
       </div>
+
       <div class='field-group'>
         <label for='patient_name'>Patient Name <span class='optional'>(optional)</span></label>
         <input type='text' id='patient_name' name='patient_name' placeholder='e.g. John Smith' autocomplete='off'>
       </div>
+
+      <div class='field-row'>
+        <div class='field-group'>
+          <label for='age'>Age <span class='optional'>(optional)</span></label>
+          <input type='number' id='age' name='age' placeholder='e.g. 55' min='1' max='120'>
+        </div>
+        <div class='field-group'>
+          <label for='gender'>Gender <span class='optional'>(optional)</span></label>
+          <select id='gender' name='gender' class='field-select'>
+            <option value=''>— Select —</option>
+            <option value='Male'>Male</option>
+            <option value='Female'>Female</option>
+            <option value='Other'>Other</option>
+            <option value='Prefer not to say'>Prefer not to say</option>
+          </select>
+        </div>
+      </div>
+
       <button type='submit' class='btn-primary' id='submit-btn'>
         <span id='btn-text'>Analyse X-ray</span>
       </button>
@@ -34,10 +91,12 @@
   </div>
   <p class='disclaimer'>For research and screening purposes only. Results do not constitute a medical diagnosis.</p>
 </main>
+
 <script>
 const dz = document.getElementById('drop-zone');
 const fi = document.getElementById('file-input');
 const preview = document.getElementById('preview');
+
 fi.addEventListener('change', function() {
   if (this.files[0]) showPreview(this.files[0]);
 });
@@ -58,9 +117,25 @@ function showPreview(file) {
   };
   reader.readAsDataURL(file);
 }
+
+const loadingMessages = [
+  'Preprocessing image...',
+  'Detecting ROI (YOLOv8)...',
+  'Segmenting bone region...',
+  'Classifying (MobileNetV2)...'
+];
+let msgIdx = 0;
+
 document.getElementById('upload-form').addEventListener('submit', function() {
-  document.getElementById('btn-text').textContent = 'Analysing...';
   document.getElementById('submit-btn').disabled = true;
+  document.getElementById('btn-text').textContent = 'Analysing...';
+  document.getElementById('loading-overlay').style.display = 'flex';
+  document.getElementById('loading-text').textContent = loadingMessages[0];
+  msgIdx = 0;
+  setInterval(function() {
+    msgIdx = (msgIdx + 1) % loadingMessages.length;
+    document.getElementById('loading-text').textContent = loadingMessages[msgIdx];
+  }, 2500);
 });
 </script>
 </body>

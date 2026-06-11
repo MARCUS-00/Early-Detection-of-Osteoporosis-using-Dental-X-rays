@@ -1,5 +1,7 @@
 from pathlib import Path
 from datetime import date
+from fpdf import FPDF
+from fpdf.enums import XPos, YPos
 
 
 CLASS_COLORS = {
@@ -7,6 +9,56 @@ CLASS_COLORS = {
     'Osteopenia':   (200, 110,  0),
     'Osteoporosis': (200,  20, 50),
 }
+
+
+def _render_conf_bars(pdf: FPDF, confidence: dict) -> None:
+    pdf.set_text_color(40, 40, 40)
+    pdf.set_font('Helvetica', 'B', 10)
+    pdf.cell(0, 6, 'Confidence Scores:',
+             new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.ln(1)
+    bar_max = 95
+    for cls in ['Normal', 'Osteopenia', 'Osteoporosis']:
+        prob   = confidence.get(cls, 0.0)
+        filled = bar_max * prob
+        pdf.set_font('Helvetica', '', 9)
+        pdf.set_text_color(40, 40, 40)
+        pdf.cell(38, 5, cls, new_x=XPos.RIGHT, new_y=YPos.TOP)
+        x, y2 = pdf.get_x(), pdf.get_y() + 1
+        pdf.set_fill_color(220, 220, 220)
+        pdf.rect(x, y2, bar_max, 3, 'F')
+        cr, cg, cb = CLASS_COLORS.get(cls, (100, 100, 100))
+        pdf.set_fill_color(cr, cg, cb)
+        if filled > 0:
+            pdf.rect(x, y2, filled, 3, 'F')
+        pdf.set_xy(x + bar_max + 2, pdf.get_y())
+        pdf.set_font('Helvetica', 'B', 9)
+        pdf.cell(20, 5, f'{prob * 100:.1f}%',
+                 new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.ln(5)
+
+
+def _render_images(pdf: FPDF, image_path: str, gradcam_path: str) -> None:
+    pdf.set_font('Helvetica', 'B', 10)
+    pdf.set_text_color(40, 40, 40)
+    pdf.cell(0, 6, 'X-ray Analysis:',
+             new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    y_img = pdf.get_y()
+    try:
+        pdf.image(str(image_path), x=20, y=y_img, w=72)
+    except Exception:
+        pass
+    if gradcam_path and Path(gradcam_path).exists():
+        try:
+            pdf.image(str(gradcam_path), x=108, y=y_img, w=72)
+        except Exception:
+            pass
+    pdf.set_y(y_img + 50)
+    pdf.set_font('Helvetica', 'I', 8)
+    pdf.set_text_color(130, 130, 130)
+    pdf.cell(0, 5,
+             'Left: Input X-ray     |     Right: Grad-CAM attention map',
+             align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
 
 def generate_report(
@@ -17,9 +69,9 @@ def generate_report(
     image_path: str = None,
     gradcam_path: str = None,
     report_date: str = None,
+    age: str = '',
+    gender: str = '',
 ) -> str:
-    from fpdf import FPDF
-
     if report_date is None:
         report_date = date.today().strftime('%B %d, %Y')
 
@@ -28,97 +80,71 @@ def generate_report(
     pdf.set_margins(20, 20, 20)
     pdf.set_auto_page_break(auto=True, margin=20)
 
+    # ── Title ──────────────────────────────────────────────────────────
     pdf.set_font('Helvetica', 'B', 18)
     pdf.set_text_color(26, 39, 68)
-    pdf.cell(0, 10, 'Osteoporosis Screening Report', ln=True, align='C')
+    pdf.cell(0, 10, 'Osteoporosis Screening Report',
+             align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     pdf.set_font('Helvetica', 'I', 9)
     pdf.set_text_color(130, 130, 130)
-    pdf.cell(0, 6, 'AI-assisted analysis  —  for clinical review only', ln=True, align='C')
+    pdf.cell(0, 6, 'AI-assisted analysis  -  for clinical review only',
+             align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     pdf.set_draw_color(14, 165, 160)
     pdf.set_line_width(0.8)
-    y = pdf.get_y() + 2
-    pdf.line(20, y, 190, y)
+    y_line = pdf.get_y() + 2
+    pdf.line(20, y_line, 190, y_line)
     pdf.ln(7)
 
+    # ── Patient info ───────────────────────────────────────────────────
     pdf.set_text_color(40, 40, 40)
-    for label, value in [
-        ('Patient Name', patient_name),
-        ('Report Date', report_date),
-        ('Analysis Method', 'MobileNetV2 — patch majority vote'),
-    ]:
+    rows = [
+        ('Patient Name',     patient_name),
+        ('Age',              age),
+        ('Gender',           gender),
+        ('Report Date',      report_date),
+        ('Analysis Method',  'YOLOv8 + U-Net + MobileNetV2'),
+    ]
+    for label, value in rows:
+        if not value or value == 'Unknown':
+            continue
         pdf.set_font('Helvetica', 'B', 10)
-        pdf.cell(52, 6, label + ':', ln=False)
+        pdf.cell(52, 6, label + ':',
+                 new_x=XPos.RIGHT, new_y=YPos.TOP)
         pdf.set_font('Helvetica', '', 10)
-        pdf.cell(0, 6, value, ln=True)
+        pdf.cell(0, 6, str(value),
+                 new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     pdf.ln(5)
 
+    # ── Diagnosis badge ────────────────────────────────────────────────
     r, g, b = CLASS_COLORS.get(prediction, (80, 80, 80))
     pdf.set_fill_color(r, g, b)
     pdf.set_text_color(255, 255, 255)
     pdf.set_font('Helvetica', 'B', 13)
-    pdf.cell(0, 11, f'  Diagnosis: {prediction}', ln=True, fill=True)
+    pdf.cell(0, 11, f'  Diagnosis: {prediction}',
+             fill=True, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     pdf.ln(4)
-    pdf.set_text_color(40, 40, 40)
-    pdf.set_font('Helvetica', 'B', 10)
-    pdf.cell(0, 6, 'Confidence Scores:', ln=True)
-    pdf.ln(1)
 
-    bar_max = 95
-    for cls in ['Normal', 'Osteopenia', 'Osteoporosis']:
-        prob = confidence.get(cls, 0.0)
-        pct = prob * 100
-        filled = bar_max * prob
+    # ── Confidence bars ────────────────────────────────────────────────
+    _render_conf_bars(pdf, confidence)
 
-        pdf.set_font('Helvetica', '', 9)
-        pdf.set_text_color(40, 40, 40)
-        pdf.cell(38, 5, cls, ln=False)
-
-        x = pdf.get_x()
-        y = pdf.get_y() + 1
-        pdf.set_fill_color(220, 220, 220)
-        pdf.rect(x, y, bar_max, 3, 'F')
-        cr, cg, cb = CLASS_COLORS.get(cls, (100, 100, 100))
-        pdf.set_fill_color(cr, cg, cb)
-        if filled > 0:
-            pdf.rect(x, y, filled, 3, 'F')
-
-        pdf.set_xy(x + bar_max + 2, pdf.get_y())
-        pdf.set_font('Helvetica', 'B', 9)
-        pdf.cell(20, 5, f'{pct:.1f}%', ln=True)
-
-    pdf.ln(5)
-
+    # ── Images ─────────────────────────────────────────────────────────
     if image_path and Path(image_path).exists():
-        pdf.set_font('Helvetica', 'B', 10)
-        pdf.set_text_color(40, 40, 40)
-        pdf.cell(0, 6, 'X-ray Analysis:', ln=True)
-        y_img = pdf.get_y()
-        try:
-            pdf.image(str(image_path), x=20, y=y_img, w=72)
-        except Exception:
-            pass
-        if gradcam_path and Path(gradcam_path).exists():
-            try:
-                pdf.image(str(gradcam_path), x=108, y=y_img, w=72)
-            except Exception:
-                pass
-        pdf.set_y(y_img + 48)
-        pdf.set_font('Helvetica', 'I', 8)
-        pdf.set_text_color(130, 130, 130)
-        pdf.cell(0, 5, 'Left: Input X-ray     |     Right: Grad-CAM attention map', ln=True, align='C')
+        _render_images(pdf, image_path, gradcam_path)
 
     pdf.ln(6)
+
+    # ── Disclaimer ─────────────────────────────────────────────────────
     pdf.set_font('Helvetica', 'I', 7.5)
     pdf.set_text_color(160, 160, 160)
     pdf.multi_cell(
         0, 4,
-        'DISCLAIMER: This report is generated by an AI screening tool and does not '
-        'constitute a medical diagnosis. Please consult a qualified physician for '
-        'clinical assessment and treatment decisions.',
+        'DISCLAIMER: This report is generated by an AI screening tool and does '
+        'not constitute a medical diagnosis. Please consult a qualified physician '
+        'for clinical assessment and treatment decisions.',
     )
 
     pdf.output(str(output_path))

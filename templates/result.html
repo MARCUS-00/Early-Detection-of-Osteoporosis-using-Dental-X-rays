@@ -11,31 +11,59 @@
   <div class='logo'>OsteoDetect</div>
   <p class='subtitle'>AI-Assisted Osteoporosis Screening from Dental X-rays</p>
 </header>
+
+<!-- SECTION A: Pipeline Status Bar -->
+<div class='result-pipeline'>
+  <div class='pipe-step done'>✓ Upload</div>
+  <span class='pipe-arrow'>→</span>
+  <div class='pipe-step done'>✓ ROI Detection</div>
+  <span class='pipe-arrow'>→</span>
+  <div class='pipe-step done'>✓ Segmentation</div>
+  <span class='pipe-arrow'>→</span>
+  <div class='pipe-step done'>✓ Classification</div>
+  <span class='pipe-arrow'>→</span>
+  <div class='pipe-step done'>✓ Report</div>
+  {% if mode == 'yolo' %}
+  <span class='mode-badge full'>Full Pipeline ✓</span>
+  {% else %}
+  <span class='mode-badge patch'>Patch Mode (no YOLO weights)</span>
+  {% endif %}
+</div>
+
 <main>
+  <!-- SECTION B: Two-column grid -->
   <div class='result-grid'>
+
+    <!-- LEFT: X-ray Analysis -->
     <div class='card image-card'>
       <h2 class='card-title'>X-ray Analysis</h2>
-      <div class='image-pair'>
-        <div class='image-block'>
-          <img src='/static/{{ image_rel }}' alt='Input X-ray' class='xray-img'>
-          <p class='img-caption'>Input X-ray</p>
-        </div>
-        {% if gradcam_rel %}
-        <div class='image-block'>
-          <img src='/static/{{ gradcam_rel }}' alt='Grad-CAM' class='xray-img'>
-          <p class='img-caption'>Attention map</p>
-        </div>
-        {% endif %}
+      <div class='image-block'>
+        <img src='/static/{{ image_rel }}' alt='Input X-ray' class='xray-img'>
+        <p class='img-caption'>Input X-ray</p>
       </div>
       {% if gradcam_rel %}
-      <p class='img-note'>Highlighted regions influenced the prediction</p>
+      <div class='image-block'>
+        <img src='/static/{{ gradcam_rel }}' alt='Attention Map' class='xray-img'>
+        <p class='img-caption'>Attention Map (Grad-CAM)</p>
+      </div>
+      <p class='img-note'>Highlighted regions represent cortical bone attention</p>
       {% endif %}
     </div>
 
+    <!-- RIGHT: Diagnosis Result -->
     <div class='card result-card'>
-      <h2 class='card-title'>Diagnosis</h2>
-      {% if patient_name and patient_name != 'Unknown' %}
-      <p class='patient-name'>Patient: <strong>{{ patient_name }}</strong></p>
+      <h2 class='card-title'>Diagnosis Result</h2>
+
+      <!-- Patient info (skip Unknown/empty fields) -->
+      {% set show_name   = patient_name and patient_name != 'Unknown' %}
+      {% set show_age    = age and age != '' %}
+      {% set show_gender = gender and gender != '' %}
+      {% if show_name or show_age or show_gender %}
+      <div class='patient-info'>
+        {% if show_name %}<div>Name: <strong>{{ patient_name }}</strong></div>{% endif %}
+        {% if show_age %}<div>Age: <strong>{{ age }}</strong></div>{% endif %}
+        {% if show_gender %}<div>Gender: <strong>{{ gender }}</strong></div>{% endif %}
+      </div>
       {% endif %}
 
       <div class='badge badge-{{ prediction.lower() }}'>{{ prediction }}</div>
@@ -46,14 +74,52 @@
         <div class='conf-row'>
           <span class='conf-label'>{{ cls }}</span>
           <div class='conf-bar-bg'>
-            <div class='conf-bar conf-{{ cls.lower() }}' style='width:{{ (probs[cls]*100)|round(1) }}%'></div>
+            <div class='conf-bar conf-{{ cls.lower() }}'
+                 data-width='{{ (probs[cls]*100)|round(1) }}'></div>
           </div>
           <span class='conf-pct'>{{ (probs[cls]*100)|round(1) }}%</span>
         </div>
         {% endfor %}
       </div>
 
-      <a href='/report?patient_name={{ patient_name }}&label={{ prediction }}&img_filename={{ img_filename }}&gradcam_filename={{ gradcam_filename }}&Normal={{ probs["Normal"] }}&Osteopenia={{ probs["Osteopenia"] }}&Osteoporosis={{ probs["Osteoporosis"] }}' class='btn-primary btn-report'>
+      <!-- Pipeline Summary (collapsible) -->
+      <button class='pipeline-toggle' id='pipe-toggle' type='button' onclick='togglePipeline()'>
+        Pipeline Summary
+        <span class='toggle-icon'>▼</span>
+      </button>
+      <div class='pipeline-body' id='pipe-body'>
+        <table class='pipeline-table'>
+          <thead>
+            <tr><th>Module</th><th>Component</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ROI Extraction</td>
+              <td>YOLOv8</td>
+              <td>
+                {% if mode == 'yolo' %}
+                <span class='status-ok'>✓ Active</span>
+                {% else %}
+                <span class='status-warn'>⚠ Fallback</span>
+                {% endif %}
+              </td>
+            </tr>
+            <tr>
+              <td>Segmentation</td>
+              <td>U-Net (built-in)</td>
+              <td><span class='status-ok'>✓ Active</span></td>
+            </tr>
+            <tr>
+              <td>Classification</td>
+              <td>MobileNetV2</td>
+              <td><span class='status-ok'>✓ Active</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <a href='/report?patient_name={{ patient_name }}&label={{ prediction }}&img_filename={{ img_filename }}&gradcam_filename={{ gradcam_filename }}&Normal={{ probs["Normal"] }}&Osteopenia={{ probs["Osteopenia"] }}&Osteoporosis={{ probs["Osteoporosis"] }}&age={{ age }}&gender={{ gender }}'
+         class='btn-primary btn-report'>
         Download PDF Report
       </a>
 
@@ -61,7 +127,26 @@
     </div>
   </div>
 
+  <!-- SECTION C: Disclaimer -->
   <p class='disclaimer'>This result is generated by an AI model. Consult a qualified physician for clinical diagnosis.</p>
 </main>
+
+<script>
+// Animate confidence bars after page loads
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    document.querySelectorAll('.conf-bar').forEach(function(bar) {
+      bar.style.width = bar.dataset.width + '%';
+    });
+  }, 100);
+});
+
+function togglePipeline() {
+  const toggle = document.getElementById('pipe-toggle');
+  const body   = document.getElementById('pipe-body');
+  toggle.classList.toggle('open');
+  body.classList.toggle('open');
+}
+</script>
 </body>
 </html>

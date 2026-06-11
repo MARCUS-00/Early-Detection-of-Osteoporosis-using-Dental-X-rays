@@ -6,6 +6,7 @@ from pathlib import Path
 from flask import Flask, render_template, request, send_file, jsonify
 from werkzeug.utils import secure_filename
 import uuid
+from validate_xray import validate_dental_xray
 
 app = Flask(__name__)
 
@@ -38,12 +39,23 @@ def predict():
         return jsonify({'error': 'Invalid or missing file'}), 400
 
     patient_name = request.form.get('patient_name', 'Unknown').strip() or 'Unknown'
+    age    = request.form.get('age', '').strip()
+    gender = request.form.get('gender', '').strip()
 
     ext = file.filename.rsplit('.', 1)[1].lower()
     uid = uuid.uuid4().hex
     img_filename = f'{uid}.{ext}'
     img_path = str(UPLOAD_DIR / img_filename)
     file.save(img_path)
+
+    # Validate the uploaded image is a dental X-ray
+    is_valid, reason = validate_dental_xray(img_path)
+    if not is_valid:
+        try:
+            os.remove(img_path)
+        except Exception:
+            pass
+        return render_template('index.html', error=reason)
 
     try:
         import os
@@ -85,6 +97,9 @@ def predict():
         patient_name=patient_name,
         img_filename=img_filename,
         gradcam_filename=gradcam_filename or '',
+        age=age,
+        gender=gender,
+        mode=result.get('mode', 'fallback'),
     )
 
 
@@ -94,6 +109,8 @@ def download_report():
     label            = request.args.get('label', 'Unknown')
     img_filename     = request.args.get('img_filename', '')
     gradcam_filename = request.args.get('gradcam_filename', '')
+    age              = request.args.get('age', '')
+    gender           = request.args.get('gender', '')
 
     probs = {
         'Normal':       float(request.args.get('Normal',       0)),
@@ -109,7 +126,8 @@ def download_report():
 
     try:
         from report_generator import generate_report
-        generate_report(report_path, patient_name, label, probs, img_path, gradcam_path)
+        generate_report(report_path, patient_name, label, probs, img_path, gradcam_path,
+                        age=age, gender=gender)
     except Exception as e:
         return jsonify({'error': f'Report generation failed: {e}'}), 500
 
