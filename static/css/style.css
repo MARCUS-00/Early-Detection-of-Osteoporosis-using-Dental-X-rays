@@ -221,3 +221,30 @@ main { max-width: 960px; margin: 32px auto; padding: 0 16px; }
   flex-shrink: 0;
   margin-top: 1px;
 }
+
+/* High-risk alert (Osteoporosis diagnosis) */
+.alert-high-risk {
+  background: #fef2f2;
+  border-left: 4px solid #b91c1c;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  color: #7f1d1d;
+}
+.alert-high-risk .alert-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.alert-high-risk p {
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.alert-high-risk a {
+  font-weight: 600;
+  color: #b91c1c;
+  text-decoration: underline;
+}

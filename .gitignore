@@ -1,7 +1,6 @@
 # Generated data files (not source artefacts)
 data/manifest.csv
 outputs/
-*.h5
 *.pth
 *.pt
 __pycache__/

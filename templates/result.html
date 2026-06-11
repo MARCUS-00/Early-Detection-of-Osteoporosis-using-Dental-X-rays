@@ -68,6 +68,18 @@
 
       <div class='badge badge-{{ prediction.lower() }}'>{{ prediction }}</div>
 
+      {% if prediction == 'Osteoporosis' %}
+      <div class='alert-high-risk'>
+        <div class='alert-title'>&#9888; High Risk — Orthopedic Referral Suggested</div>
+        <p>
+          This AI screening indicates a high risk of osteoporosis.
+          The patient should be referred to an <strong>orthopedic specialist</strong>
+          or physician for confirmatory DEXA scan and clinical evaluation.
+          Do not rely on this result alone for treatment decisions.
+        </p>
+      </div>
+      {% endif %}
+
       <div class='confidence-section'>
         <h3>Confidence Scores</h3>
         {% for cls in ['Normal', 'Osteopenia', 'Osteoporosis'] %}
