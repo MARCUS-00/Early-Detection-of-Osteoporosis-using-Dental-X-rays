@@ -25,4 +25,7 @@ models/*.pth
 outputs/
 
 .DS_Store
-Thumbs.dbEarly-Detection-of-Osteoporosis-using-Dental-X-rays/
+Thumbs.db
+
+static/uploads/
+static/reports/

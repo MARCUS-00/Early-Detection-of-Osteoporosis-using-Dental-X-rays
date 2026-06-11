@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<title>OsteoDetect — AI Screening</title>
+<link rel='stylesheet' href='/static/css/style.css'>
+</head>
+<body>
+<header>
+  <div class='logo'>OsteoDetect</div>
+  <p class='subtitle'>AI-Assisted Osteoporosis Screening from Dental X-rays</p>
+</header>
+<main>
+  <div class='card upload-card'>
+    <form action='/predict' method='POST' enctype='multipart/form-data' id='upload-form'>
+      <div class='drop-zone' id='drop-zone' onclick='document.getElementById("file-input").click()'>
+        <svg width='48' height='48' fill='none' stroke='currentColor' stroke-width='1.5' viewBox='0 0 24 24'>
+          <path stroke-linecap='round' stroke-linejoin='round' d='M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5'/>
+        </svg>
+        <p class='drop-text'>Drop X-ray here or <span class='link-text'>browse</span></p>
+        <p class='drop-hint'>Accepts JPG, PNG, BMP</p>
+        <img id='preview' src='' alt='Preview' style='display:none;max-width:100%;margin-top:12px;border-radius:8px;'>
+        <input type='file' id='file-input' name='xray' accept='.jpg,.jpeg,.png,.bmp' required style='display:none'>
+      </div>
+      <div class='field-group'>
+        <label for='patient_name'>Patient Name <span class='optional'>(optional)</span></label>
+        <input type='text' id='patient_name' name='patient_name' placeholder='e.g. John Smith' autocomplete='off'>
+      </div>
+      <button type='submit' class='btn-primary' id='submit-btn'>
+        <span id='btn-text'>Analyse X-ray</span>
+      </button>
+    </form>
+  </div>
+  <p class='disclaimer'>For research and screening purposes only. Results do not constitute a medical diagnosis.</p>
+</main>
+<script>
+const dz = document.getElementById('drop-zone');
+const fi = document.getElementById('file-input');
+const preview = document.getElementById('preview');
+fi.addEventListener('change', function() {
+  if (this.files[0]) showPreview(this.files[0]);
+});
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) {
+    fi.files = e.dataTransfer.files;
+    showPreview(e.dataTransfer.files[0]);
+  }
+});
+function showPreview(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+document.getElementById('upload-form').addEventListener('submit', function() {
+  document.getElementById('btn-text').textContent = 'Analysing...';
+  document.getElementById('submit-btn').disabled = true;
+});
+</script>
+</body>
+</html>
