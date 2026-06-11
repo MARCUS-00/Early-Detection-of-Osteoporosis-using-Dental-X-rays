@@ -9,7 +9,7 @@ import numpy as np
 from osteo.preprocessing.border import remove_border
 from osteo.preprocessing.patches import split_into_patches
 
-IMG_SIZE = (128, 128)
+IMG_SIZE = (100, 100)
 
 
 def _preprocess_patches(patches):
@@ -22,7 +22,7 @@ def _preprocess_patches(patches):
             p = np.concatenate([p, p, p], axis=-1)
         else:
             p = cv2.cvtColor(p, cv2.COLOR_BGR2RGB)
-        result.append(p.astype(np.float32) / 255.0)
+        result.append(p.astype(np.float32))
     return np.array(result)
 
 

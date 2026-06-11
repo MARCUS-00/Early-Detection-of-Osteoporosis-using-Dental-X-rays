@@ -2,7 +2,7 @@
 # Do NOT invent values. All entries here are directly observed in source files.
 
 # Input
-img_size: [128, 128]
+img_size: [100, 100]
 
 # Data loading
 train_batch_size: 32   # train_mobilenet.py: BATCH_SIZE=32
