@@ -46,8 +46,17 @@ def predict():
     file.save(img_path)
 
     try:
-        from osteo.inference.predict_patches import predict_image_with_probs
-        result = predict_image_with_probs(img_path, MODEL_PATH, CLASS_NAMES)
+        import os
+        yolo_weights = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), 'yolo_weights.pt'
+        )
+        from osteo.inference.pipeline_full import run_full_pipeline
+        result = run_full_pipeline(
+            img_path=img_path,
+            classifier_path=MODEL_PATH,
+            class_names=CLASS_NAMES,
+            yolo_weights=yolo_weights if os.path.exists(yolo_weights) else None,
+        )
     except Exception as e:
         return jsonify({'error': f'Prediction failed: {e}'}), 500
 

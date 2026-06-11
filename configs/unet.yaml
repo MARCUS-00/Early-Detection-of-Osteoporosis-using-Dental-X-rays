@@ -1,0 +1,17 @@
+# U-Net hyperparameters — sourced from Unet_Extraction.ipynb
+in_channels: 3
+out_channels: 1
+features: [64, 128, 256, 512]
+target_h: 100
+target_w: 100
+epochs: 20
+learning_rate: 0.001
+val_split: 0.2
+batch_size: 4
+output_filenames:
+  left: 'unet_roi_left.pth'
+  right: 'unet_roi_right.pth'
+  general: 'unet_roi_general.pth'
+# NOTE: left-side training diverged (loss 2.0254) in source. Not fixed.
+images_dir: ''
+masks_dir: ''

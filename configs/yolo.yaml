@@ -1,0 +1,14 @@
+# YOLOv8 ROI detection — sourced from ROI_Extraction.ipynb
+base_weights: 'yolov8n.pt'
+num_classes: 1
+class_names:
+  - 'cortex_roi'
+# Config A (default)
+epochs: 50
+imgsz: 1024
+batch: 2
+# Config B: epochs: 30, imgsz: 640, batch: 8
+conf_threshold: 0.1
+data_yaml: ''
+model_path: ''
+output_dir: 'runs/detect'
