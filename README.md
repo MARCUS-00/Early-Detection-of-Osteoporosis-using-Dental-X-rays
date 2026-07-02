@@ -151,6 +151,18 @@ Input "patch_0_255"  (100×100×3, raw [0,255] — EfficientNet rescales interna
 
 > Requires Python 3.11+ and the model file at `model/osteoporosis_efficientnetb0.keras` (already committed).
 
+### Easiest: one command
+
+```bash
+python run.py
+```
+
+Creates the virtualenv, installs dependencies, and starts the app at
+http://127.0.0.1:5000. First run downloads TensorFlow (slow); later runs skip
+the install and start in seconds. Default login: `admin` / `admin123`.
+
+### Manual setup
+
 ```bash
 git clone https://github.com/MARCUS-00/Early-Detection-of-Osteoporosis-using-Dental-X-rays.git
 cd Early-Detection-of-Osteoporosis-using-Dental-X-rays

@@ -16,5 +16,5 @@ jobs:
             echo "ERROR: HF_TOKEN is not configured in repository secrets."
             exit 1
           fi
-          git remote add space https://huggingface.co/spaces/MANOJKUMAR724/osteoscan
-          git -c http.extraheader="AUTHORIZATION: Bearer $HF_TOKEN" push space main --force
+          git remote add space https://hf:${HF_TOKEN}@huggingface.co/spaces/MANOJKUMAR724/osteoscan
+          git push space main --force
