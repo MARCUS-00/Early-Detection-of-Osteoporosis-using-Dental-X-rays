@@ -1,0 +1,13 @@
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data      # persist uploads, reports, and the SQLite DB
+      - ./model:/app/model    # mount model weights
+    environment:
+      - SECRET_KEY=change-me-in-production
+      - ADMIN_PASSWORD=change-me
+      - DATA_DIR=/app/data
+    restart: unless-stopped

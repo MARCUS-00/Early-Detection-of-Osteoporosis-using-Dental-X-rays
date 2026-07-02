@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block admin_nav %}
+<nav class="admin-nav">
+  <a href="{{ url_for('admin.dashboard') }}" class="active">Dashboard</a>
+  <a href="{{ url_for('admin.users') }}">Users</a>
+  <a href="{{ url_for('admin.predictions') }}">Predictions</a>
+  <a href="{{ url_for('main.index') }}">App</a>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 12px;">
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-num">{{ total_users }}</div>
+      <div class="stat-label">Registered Users</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">{{ total_predictions }}</div>
+      <div class="stat-label">Total Predictions</div>
+    </div>
+  </div>
+
+  <!-- Recent predictions -->
+  <div class="card">
+    <div class="card-body">
+      <h2 class="card-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm0 5v5l3 3"/></svg>
+        Recent Predictions
+      </h2>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>Patient</th><th>Label</th><th>User</th><th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in recent %}
+          <tr>
+            <td style="color:var(--text-muted); font-size:0.8rem;">{{ p.id }}</td>
+            <td><strong>{{ p.patient_name }}</strong></td>
+            <td><span class="badge badge-{{ p.label | lower }}">{{ p.label }}</span></td>
+            <td>{{ p.user.username if p.user else '(deleted)' }}</td>
+            <td style="color:var(--text-muted); font-size:0.82rem;">{{ p.created_at.strftime('%d %b %Y %H:%M') }}</td>
+          </tr>
+          {% else %}
+          <tr class="table-empty"><td colspan="5">No predictions yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

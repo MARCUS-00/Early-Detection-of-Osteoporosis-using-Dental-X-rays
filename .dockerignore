@@ -1,0 +1,27 @@
+# Environments & caches
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ruff_cache/
+
+# Runtime data & reports
+data/
+.coverage
+coverage.xml
+htmlcov/
+
+# VCS, CI, docs, training, notebooks — not needed at runtime
+.git/
+.github/
+kaggle/
+training/
+tests/
+*.egg-info/
+build/
+dist/
+.idea/
+.vscode/

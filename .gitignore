@@ -1,0 +1,38 @@
+# --- Model weights ---
+# Large binaries are ignored by default; the canonical EfficientNetB0
+# classifier is explicitly un-ignored so it ships with the repo.
+*.h5
+*.keras
+*.pt
+*.pth
+!model/osteoporosis_efficientnetb0.keras
+
+# --- Runtime data (uploads, reports, SQLite DB) ---
+/data/
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+build/
+dist/
+
+# --- Tooling caches / reports ---
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# --- Environments ---
+.venv/
+venv/
+env/
+.env
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

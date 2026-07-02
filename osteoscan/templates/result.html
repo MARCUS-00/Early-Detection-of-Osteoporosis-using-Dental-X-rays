@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Result — {{ patient_name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 8px;">
+
+  <div class="result-grid">
+
+    <!-- LEFT: X-ray images -->
+    <div class="card">
+      <div class="card-body">
+        <h2 class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          X-ray Analysis
+        </h2>
+
+        <div class="img-block">
+          <img src="{{ url_for('main.serve_upload', filename=image_rel) }}" alt="Input X-ray" class="xray-img">
+          <p class="img-caption">Original radiograph</p>
+        </div>
+
+        {% if gradcam_rel %}
+        <div class="img-block">
+          <img src="{{ url_for('main.serve_upload', filename=gradcam_rel) }}" alt="Grad-CAM heatmap" class="xray-img">
+          <p class="img-caption">Grad-CAM activation map — regions influencing diagnosis</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- RIGHT: Diagnosis -->
+    <div class="card">
+      <div class="card-body">
+        <h2 class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Diagnosis Result
+        </h2>
+
+        <!-- Patient strip -->
+        <div class="patient-strip">
+          <span>Patient: <strong>{{ patient_name }}</strong></span>
+          {% if age %}<span>Age: <strong>{{ age }}</strong></span>{% endif %}
+          {% if gender %}<span>Gender: <strong>{{ gender }}</strong></span>{% endif %}
+        </div>
+
+        {% if panoramic_warning %}
+        <div class="alert-panoramic">
+          <strong>&#9888; Image type warning:</strong> {{ panoramic_warning }}
+        </div>
+        {% endif %}
+
+        <!-- Diagnosis badge -->
+        <div class="diagnosis-badge badge-{{ prediction | lower }}">
+          {% if prediction == 'Normal' %}&#10003;{% elif prediction == 'Osteopenia' %}&#9679;{% else %}&#9888;{% endif %}
+          {{ prediction }}
+        </div>
+
+        <!-- High-risk alert -->
+        {% if prediction == 'Osteoporosis' %}
+        <div class="alert-high">
+          <div class="alert-high-title">&#9888; High Risk — Specialist Referral Suggested</div>
+          <p>This AI screening indicates elevated osteoporosis risk. Refer for confirmatory DEXA scan and clinical evaluation. Do not rely on this result alone for treatment decisions.</p>
+        </div>
+        {% endif %}
+
+        <!-- Confidence bars -->
+        <div class="conf-section">
+          <h3>Confidence Scores</h3>
+          {% for cls in ['Normal', 'Osteopenia', 'Osteoporosis'] %}
+          <div class="conf-row">
+            <span class="conf-label">{{ cls }}</span>
+            <div class="conf-track">
+              <div class="conf-fill conf-fill--{{ cls | lower }}"
+                   data-w="{{ (probs[cls] * 100) | round(1) }}"></div>
+            </div>
+            <span class="conf-pct">{{ (probs[cls] * 100) | round(1) }}%</span>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Pipeline status -->
+        {% if stages %}
+        <div style="margin-top: 18px;">
+          <p class="section-label">Pipeline stages</p>
+          <div class="pipeline-row">
+            <div class="pipeline-chip">
+              <span class="chip-stage">YOLO</span>
+              <span class="chip-status chip-status--{{ stages.yolo }}">
+                {% if stages.yolo == 'model' %}AI model{% else %}Fallback{% endif %}
+              </span>
+            </div>
+            <div class="pipeline-chip">
+              <span class="chip-stage">U-Net</span>
+              <span class="chip-status chip-status--{{ stages.unet }}">
+                {% if stages.unet == 'model' %}AI model{% else %}Fallback{% endif %}
+              </span>
+            </div>
+            <div class="pipeline-chip pipeline-chip--active">
+              <span class="chip-stage">EfficientNet</span>
+              <span class="chip-status chip-status--active">AI model</span>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Stats -->
+        <div class="stats-row">
+          {% if patch_count %}
+          <div class="stat-pill">Patches: <strong>{{ patch_count }}</strong></div>
+          {% endif %}
+          {% if roi_count %}
+          <div class="stat-pill">ROIs: <strong>{{ roi_count }}</strong></div>
+          {% endif %}
+        </div>
+
+        <!-- Actions -->
+        <div style="margin-top: 22px; display: flex; flex-direction: column; gap: 10px;">
+          <a href="/report?patient_name={{ patient_name | urlencode }}&label={{ prediction }}&img_filename={{ img_filename }}&gradcam_filename={{ gradcam_filename }}&Normal={{ probs['Normal'] }}&Osteopenia={{ probs['Osteopenia'] }}&Osteoporosis={{ probs['Osteoporosis'] }}&age={{ age }}&gender={{ gender | urlencode }}"
+             class="btn btn-primary btn-full">
+            &#8615; Download PDF Report
+          </a>
+          <a href="/" class="btn btn-secondary btn-full">Analyse Another Image</a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+window.addEventListener('load', function () {
+  setTimeout(function () {
+    document.querySelectorAll('.conf-fill').forEach(function (el) {
+      el.style.width = el.dataset.w + '%';
+    });
+  }, 100);
+});
+</script>
+{% endblock %}

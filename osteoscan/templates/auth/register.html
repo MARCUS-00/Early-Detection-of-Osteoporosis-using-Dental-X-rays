@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Create Account{% endblock %}
+{% block main_class %}site-main--auth{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+  <div class="auth-header">
+    <div class="auth-logo">O+</div>
+    <h1 class="auth-title">Create account</h1>
+    <p class="auth-sub">Join OsteoScan to save and review predictions</p>
+  </div>
+
+  <form method="POST">
+    <div class="form-field">
+      <label class="form-label" for="username">Username</label>
+      <input class="form-input" type="text" id="username" name="username"
+             required autocomplete="username" autofocus>
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="email">
+        Email <span class="form-label-opt">(optional)</span>
+      </label>
+      <input class="form-input" type="email" id="email" name="email"
+             autocomplete="email">
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="password">Password</label>
+      <input class="form-input" type="password" id="password" name="password"
+             required autocomplete="new-password">
+    </div>
+    <button type="submit" class="btn btn-primary btn-lg btn-full" style="margin-top: 8px;">
+      Create Account
+    </button>
+  </form>
+
+  <p class="auth-footer">
+    Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a>
+  </p>
+</div>
+{% endblock %}

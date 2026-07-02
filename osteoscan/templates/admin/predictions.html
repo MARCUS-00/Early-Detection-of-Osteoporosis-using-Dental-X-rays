@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Predictions — Admin{% endblock %}
+
+{% block admin_nav %}
+<nav class="admin-nav">
+  <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+  <a href="{{ url_for('admin.users') }}">Users</a>
+  <a href="{{ url_for('admin.predictions') }}" class="active">Predictions</a>
+  <a href="{{ url_for('main.index') }}">App</a>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 12px;">
+  <div class="card">
+    <div class="card-body">
+      <h2 class="card-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        All Predictions ({{ predictions | length }})
+      </h2>
+      <div style="overflow-x: auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th><th>Patient</th><th>Age</th><th>Gender</th><th>Label</th>
+              <th>Normal</th><th>Osteopenia</th><th>Osteoporosis</th>
+              <th>User</th><th>Date</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in predictions %}
+            <tr>
+              <td style="color:var(--text-muted); font-size:0.78rem;">{{ p.id }}</td>
+              <td><strong>{{ p.patient_name }}</strong></td>
+              <td style="color:var(--text-muted);">{{ p.age or '—' }}</td>
+              <td style="color:var(--text-muted);">{{ p.gender or '—' }}</td>
+              <td><span class="badge badge-{{ p.label | lower }}">{{ p.label }}</span></td>
+              <td style="font-size:0.82rem;">{{ (p.prob_normal * 100) | round(1) }}%</td>
+              <td style="font-size:0.82rem;">{{ (p.prob_osteopenia * 100) | round(1) }}%</td>
+              <td style="font-size:0.82rem;">{{ (p.prob_osteoporosis * 100) | round(1) }}%</td>
+              <td style="color:var(--text-muted); font-size:0.82rem;">{{ p.user.username if p.user else '(deleted)' }}</td>
+              <td style="color:var(--text-muted); font-size:0.78rem; white-space:nowrap;">{{ p.created_at.strftime('%d %b %Y') }}</td>
+              <td>
+                <form method="POST" action="{{ url_for('admin.delete_prediction', pid=p.id) }}" style="display:inline">
+                  <button type="submit" class="btn btn-danger btn-sm"
+                          onclick="return confirm('Delete prediction #{{ p.id }}?')">Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr class="table-empty"><td colspan="11">No predictions yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

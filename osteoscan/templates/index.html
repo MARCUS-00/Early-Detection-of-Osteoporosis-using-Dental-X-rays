@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Upload X-ray{% endblock %}
+
+{% block content %}
+<div class="container--sm" style="padding-top: 8px;">
+
+  <!-- Hero -->
+  <div class="hero">
+    <h1 class="hero-title">Early Detection of Osteoporosis<br>from Dental X-rays</h1>
+    <p class="hero-sub">AI-assisted bone density screening — EfficientNetB0 patch-based classification</p>
+    <div class="hero-tags">
+      <span class="badge badge-proto">Research Prototype</span>
+      <span class="badge badge-proto">Not for Clinical Use</span>
+    </div>
+  </div>
+
+  <!-- Error alert -->
+  {% if error %}
+  <div class="error-alert">{{ error }}</div>
+  {% endif %}
+
+  <!-- Upload card -->
+  <div class="card" style="position: relative;">
+    <div class="card-body">
+
+      <!-- Loading overlay -->
+      <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <p class="loading-msg" id="loading-msg">Preprocessing image...</p>
+      </div>
+
+      <form action="/predict" method="POST" enctype="multipart/form-data" id="upload-form">
+
+        <!-- Drop zone -->
+        <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+          <div class="drop-zone-icon">
+            <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5
+                       m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+            </svg>
+          </div>
+          <p class="drop-zone-title">Drop X-ray here or <span class="drop-link">browse files</span></p>
+          <p class="drop-zone-hint">Accepts JPG, PNG, BMP &mdash; grayscale dental radiograph</p>
+          <p id="dz-name"></p>
+          <img id="dz-preview" src="" alt="X-ray preview">
+          <input type="file" id="file-input" name="xray"
+                 accept=".jpg,.jpeg,.png,.bmp" required
+                 style="display:none" aria-label="Upload dental X-ray">
+        </div>
+
+        <!-- Patient info -->
+        <div style="margin-top: 22px;">
+          <p class="section-label">Patient Information <span style="font-weight:400">(optional)</span></p>
+          <div class="form-field">
+            <label class="form-label" for="patient_name">Patient Name</label>
+            <input class="form-input" type="text" id="patient_name" name="patient_name"
+                   placeholder="e.g. Jane Smith" autocomplete="off">
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label class="form-label" for="age">Age</label>
+              <input class="form-input" type="number" id="age" name="age"
+                     placeholder="e.g. 55" min="1" max="120">
+            </div>
+            <div class="form-field">
+              <label class="form-label" for="gender">Gender</label>
+              <select class="form-select" id="gender" name="gender">
+                <option value="">— Select —</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3-stage pipeline preview -->
+        <div style="margin-top: 6px;">
+          <p class="section-label">Analysis Pipeline</p>
+          <div class="pipeline-row">
+            <div class="pipeline-chip">
+              <span class="chip-stage">YOLO v8</span>
+              <span class="chip-status chip-status--active">ROI Detection</span>
+            </div>
+            <div class="pipeline-chip">
+              <span class="chip-stage">U-Net</span>
+              <span class="chip-status chip-status--active">Bone Segmentation</span>
+            </div>
+            <div class="pipeline-chip pipeline-chip--active">
+              <span class="chip-stage">EfficientNet B0</span>
+              <span class="chip-status chip-status--active">Classification</span>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg btn-full" id="submit-btn" style="margin-top: 20px;">
+          Analyse X-ray
+        </button>
+
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var dz = document.getElementById('drop-zone');
+  var fi = document.getElementById('file-input');
+
+  fi.addEventListener('change', function () { if (this.files[0]) showFile(this.files[0]); });
+
+  dz.addEventListener('dragover', function (e) { e.preventDefault(); e.stopPropagation(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', function (e) { e.stopPropagation(); dz.classList.remove('drag-over'); });
+  dz.addEventListener('drop', function (e) {
+    e.preventDefault(); e.stopPropagation(); dz.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) { fi.files = e.dataTransfer.files; showFile(e.dataTransfer.files[0]); }
+  });
+
+  function showFile(file) {
+    document.getElementById('dz-name').textContent = file.name;
+    var r = new FileReader();
+    r.onload = function (e) {
+      var p = document.getElementById('dz-preview');
+      p.src = e.target.result;
+      p.style.display = 'block';
+    };
+    r.readAsDataURL(file);
+  }
+
+  var msgs = ['Preprocessing image...', 'Removing borders...', 'Applying CLAHE...', 'Extracting patches...', 'Running EfficientNetB0...', 'Aggregating results...'];
+  var idx = 0;
+
+  document.getElementById('upload-form').addEventListener('submit', function () {
+    document.getElementById('submit-btn').disabled = true;
+    document.getElementById('submit-btn').textContent = 'Analysing...';
+    var ol = document.getElementById('loading-overlay');
+    ol.style.display = 'flex';
+    document.getElementById('loading-msg').textContent = msgs[0];
+    setInterval(function () { idx = (idx + 1) % msgs.length; document.getElementById('loading-msg').textContent = msgs[idx]; }, 1800);
+  });
+}());
+</script>
+{% endblock %}

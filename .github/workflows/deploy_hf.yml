@@ -1,0 +1,20 @@
+name: Deploy to HF
+on:
+  push:
+    branches: [main]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { lfs: true, fetch-depth: 0 }
+      - name: Deploy to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "ERROR: HF_TOKEN is not configured in repository secrets."
+            exit 1
+          fi
+          git remote add space https://huggingface.co/spaces/MANOJKUMAR724/osteoscan
+          git -c http.extraheader="AUTHORIZATION: Bearer $HF_TOKEN" push space main --force

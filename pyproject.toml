@@ -1,0 +1,60 @@
+[project]
+name = "osteoscan"
+version = "1.0.0"
+description = "Osteoporosis screening from dental periapical radiographs (EfficientNetB0 + Flask)"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = [
+    ".venv",
+    "data",
+    "__pycache__",
+    ".git",
+    "*.egg-info",
+    "build",
+    "dist",
+    "kaggle",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+]
+ignore = [
+    "E501",  # line too long — ruff format handles this
+    "B008",  # do not perform function calls in default arguments (Flask patterns use this)
+    "UP007", # use X | Y for type hints — keep Optional[] for TF/Keras compat
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["osteoscan"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.coverage.run]
+source = ["osteoscan"]
+omit = [
+    "tests/*",
+    "training/*",
+    "kaggle/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]

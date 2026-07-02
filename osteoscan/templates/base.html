@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}OsteoScan{% endblock %} — Early Detection</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="{{ url_for('main.index') }}" class="logo">
+      <div class="logo-mark">O+</div>
+      <div>
+        <div class="logo-text">OsteoScan</div>
+        <div class="logo-sub">PES University</div>
+      </div>
+    </a>
+    <nav class="site-nav">
+      {% if current_user.is_authenticated %}
+        {% if current_user.role == 'admin' %}
+          <a href="{{ url_for('admin.dashboard') }}" class="nav-link">Admin</a>
+        {% endif %}
+        <a href="{{ url_for('main.history') }}" class="nav-link">History</a>
+        <a href="{{ url_for('auth.profile') }}" class="nav-link">
+          <span class="nav-avatar">{{ current_user.username[0].upper() }}</span>
+          {{ current_user.username }}
+        </a>
+        <a href="{{ url_for('auth.logout') }}" class="nav-link nav-logout">Sign out</a>
+      {% else %}
+        <a href="{{ url_for('auth.login') }}" class="nav-link">Sign in</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+
+{% block admin_nav %}{% endblock %}
+
+<main class="{% block main_class %}site-main{% endblock %}">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="container">
+      {% for cat, msg in messages %}
+      <div class="flash flash-{{ cat or 'info' }}">{{ msg }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="site-footer">
+  <p>RESEARCH PROTOTYPE — NOT FOR CLINICAL USE. Results do not constitute a medical diagnosis.</p>
+</footer>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

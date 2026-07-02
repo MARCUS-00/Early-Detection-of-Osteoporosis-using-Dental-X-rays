@@ -1,0 +1,35 @@
+# Deep learning backbone and EfficientNetB0 model loading (CPU-only — no CUDA dead weight)
+tensorflow-cpu>=2.12,<2.20
+
+# Image processing: border removal, CLAHE, patch extraction, Grad-CAM overlay
+opencv-python-headless>=4.8
+
+# Numerical operations for patch batching and probability averaging
+numpy>=1.24
+
+# Image I/O for saving/loading patches and generated images
+pillow>=10.0
+
+# LOSO evaluation metrics (classification_report, confusion_matrix)
+scikit-learn>=1.3
+
+# Web server: routing, upload handling, template rendering
+flask>=3.0
+
+# PDF diagnostic report generation
+fpdf2>=2.7
+
+# Secure filename handling for uploaded files
+werkzeug>=3.0
+
+# SQLite ORM for patient records and prediction history
+flask-sqlalchemy>=3.0
+
+# Session management and login/logout handling
+flask-login>=0.6
+
+# Production WSGI server for Docker deployment
+gunicorn>=21.2
+
+# Test runner
+pytest>=8.0

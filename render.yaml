@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: osteoscan
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATA_DIR
+        value: /app/data

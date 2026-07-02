@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{% if is_admin %}All Predictions{% else %}My Predictions{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 12px;">
+  <div class="card">
+    <div class="card-body">
+      <h2 class="card-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        {% if is_admin %}All Predictions ({{ predictions | length }}){% else %}My Predictions ({{ predictions | length }}){% endif %}
+      </h2>
+
+      <div style="overflow-x: auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Age</th>
+              <th>Gender</th>
+              <th>Diagnosis</th>
+              <th>Normal</th>
+              <th>Osteopenia</th>
+              <th>Osteoporosis</th>
+              {% if is_admin %}<th>Clinician</th>{% endif %}
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in predictions %}
+            <tr>
+              <td><strong>{{ p.patient_name }}</strong></td>
+              <td style="color:var(--text-muted);">{{ p.age or '—' }}</td>
+              <td style="color:var(--text-muted);">{{ p.gender or '—' }}</td>
+              <td><span class="badge badge-{{ p.label | lower }}">{{ p.label }}</span></td>
+              <td style="font-size:0.82rem;">{{ (p.prob_normal * 100) | round(1) }}%</td>
+              <td style="font-size:0.82rem;">{{ (p.prob_osteopenia * 100) | round(1) }}%</td>
+              <td style="font-size:0.82rem;">{{ (p.prob_osteoporosis * 100) | round(1) }}%</td>
+              {% if is_admin %}
+              <td style="color:var(--text-muted); font-size:0.82rem;">{{ p.user.username if p.user else '(deleted)' }}</td>
+              {% endif %}
+              <td style="color:var(--text-muted); font-size:0.78rem; white-space:nowrap;">{{ p.created_at.strftime('%d %b %Y') }}</td>
+            </tr>
+            {% else %}
+            <tr class="table-empty">
+              <td colspan="{% if is_admin %}9{% else %}8{% endif %}">
+                No predictions yet. <a href="{{ url_for('main.index') }}">Analyse an X-ray</a> to get started.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

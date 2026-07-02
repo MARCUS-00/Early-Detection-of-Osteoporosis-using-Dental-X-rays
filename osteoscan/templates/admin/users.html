@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Users — Admin{% endblock %}
+
+{% block admin_nav %}
+<nav class="admin-nav">
+  <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+  <a href="{{ url_for('admin.users') }}" class="active">Users</a>
+  <a href="{{ url_for('admin.predictions') }}">Predictions</a>
+  <a href="{{ url_for('main.index') }}">App</a>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 12px;">
+  <div class="card">
+    <div class="card-body">
+      <h2 class="card-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        All Users ({{ users | length }})
+      </h2>
+      <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Created</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td style="color:var(--text-muted); font-size:0.8rem;">{{ u.id }}</td>
+            <td><strong>{{ u.username }}</strong></td>
+            <td style="color:var(--text-muted);">{{ u.email or '—' }}</td>
+            <td><span class="badge badge-{{ u.role }}">{{ u.role }}</span></td>
+            <td style="color:var(--text-muted); font-size:0.82rem;">{{ u.created_at.strftime('%d %b %Y') }}</td>
+            <td>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <form method="POST" action="{{ url_for('admin.toggle_role', uid=u.id) }}" style="display:inline">
+                  <button class="btn btn-ghost btn-sm" type="submit">Toggle Role</button>
+                </form>
+                <form method="POST" action="{{ url_for('admin.delete_user', uid=u.id) }}" style="display:inline">
+                  <button class="btn btn-danger btn-sm" type="submit"
+                          onclick="return confirm('Permanently delete user {{ u.username }}?')">Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr class="table-empty"><td colspan="6">No users found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
